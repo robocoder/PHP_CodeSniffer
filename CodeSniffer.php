@@ -91,16 +91,16 @@ class PHP_CodeSniffer
     private static $_resolveTokenCache = array();
 
     /**
-     * The directory to search for sniffs in.
+     * An array of directories to search for sniffs in.
      *
      * This is declared static because it is also used in the
      * autoloader to look for sniffs outside the PHPCS install.
      * This way, standards designed to be installed inside PHPCS can
      * also be used from outside the PHPCS Standards directory.
      *
-     * @var string
+     * @var array
      */
-    protected static $standardDir = '';
+    protected static $standardDirs = array();
 
     /**
      * The CLI object controlling the run.
@@ -272,20 +272,21 @@ class PHP_CodeSniffer
 
         if (is_file(dirname(__FILE__).'/'.$path) === true) {
             // Check standard file locations based on class name.
-            include dirname(__FILE__).'/'.$path;
-        } else if (is_file(dirname(__FILE__).'/CodeSniffer/Standards/'.$path) === true) {
+            $path = dirname(__FILE__).'/'.$path;
+        } elseif (is_file(dirname(__FILE__).'/CodeSniffer/Standards/'.$path) === true) {
             // Check for included sniffs.
-            include dirname(__FILE__).'/CodeSniffer/Standards/'.$path;
-        } else if (self::$standardDir !== ''
-            && is_file(dirname(self::$standardDir).'/'.$path) === true
-        ) {
+            $path = dirname(__FILE__).'/CodeSniffer/Standards/'.$path;
+        } elseif (!empty(self::$standardDirs)) {
             // Check standard file locations based on the passed standard directory.
-            include dirname(self::$standardDir).'/'.$path;
-        } else {
-            // Everything else.
-            @include $path;
+            foreach (self::$standardDirs as $standardDir) {
+                if (is_file(dirname($standardDir).'/'.$path) === true) {
+                    $path = dirname($standardDir).'/'.$path;
+                    break;
+                }
+            }
         }
 
+        @include $path;
     }//end autoload()
 
 
